@@ -2,9 +2,10 @@
 
 Repo for capstone project completed as part of Master of Information and Data Science (MIDS) - Capstone course at UC Berkeley.
 
-[Project details here](https://drkulkarni236.github.io/project-windsmart.html).
+[Project details](https://drkulkarni236.github.io/project-windsmart.html).
 
-Python notebooks contain EDA and modeling.
+Notebooks:
+[EDA](https://github.com/drkulkarni236/Portfolio/blob/master/WindSmart_Wind_Turbine_Failure_Prediction/eda.ipynb), [Data Wrangling](https://github.com/drkulkarni236/Portfolio/blob/master/WindSmart_Wind_Turbine_Failure_Prediction/data_wrangling.ipynb),
+[Modeling](https://github.com/drkulkarni236/Portfolio/blob/master/WindSmart_Wind_Turbine_Failure_Prediction/Modeling.ipynb).
 
-'/app' folder contains the Flask web app.
-
+[Flask web app](https://github.com/drkulkarni236/Portfolio/tree/master/WindSmart_Wind_Turbine_Failure_Prediction/app)
