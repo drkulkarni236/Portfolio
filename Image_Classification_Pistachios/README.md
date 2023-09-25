@@ -1,12 +1,7 @@
-# w281GroupProject
-- The main notebook is W281_Final_Project_Report.ipynb.
-- The supporting notebooks include the following:
-  - hand_coded_features_p1.ipynb
-  - pistachios-f1-score-99 (2).ipynb
-  - W281_Project_EDA_Deva.ipynb
-- The rest of the notebooks are scratch notebooks.
-- The various csv files that start with pistachios are the data files with features.
-- Pistachio_Image_Dataset contains the raw images
-- Additional processed images can be find through these links:
-  - https://drive.google.com/file/d/1ucp99p7dNVjO7nvUA4ilws20VBSUc_5b/view?usp=sharing
-  - https://drive.google.com/file/d/15k7mgTuN7QIiziRCYyTTK6WooHRC-3kf/view?usp=sharing
+# Image Classification: Pistachios
+
+Repo for project completed as part of Master of Information and Data Science (MIDS) - Computer Vision course at UC Berkeley.
+
+[Project details](https://drkulkarni236.github.io/project-CV.html).
+
+Notebooks: [Final report](https://github.com/drkulkarni236/Portfolio/blob/master/Image_Classification_Pistachios/W281_Final_Project_Report.ipynb).
