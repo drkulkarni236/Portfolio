@@ -1,0 +1,616 @@
+---
+title: "W203 - Lab 2"
+author: "Devashish Kulkarni, Tiantian Zhao, Yuqiao(Esther) Chen"
+subtitle: The Relationship Between Mask-Use and COVID-19 Cases
+output:
+  bookdown::pdf_document2: 
+    toc: true
+    latex_engine: xelatex
+<<<<<<< HEAD
+
+=======
+  html_document:
+    df_print: paged
+>>>>>>> 9441c38e71113709f0e18b31e823610de31482ed
+---
+\clearpage
+
+```{r}
+
+install.packages("devtools")
+devtools::install_github("UrbanInstitute/urbnmapr")
+
+
+```
+
+```{r setup, include=FALSE, warning=FALSE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(magrittr)
+library(lubridate)
+library(stargazer)
+library(readxl)
+library(kableExtra)
+library(psych)
+library(gridExtra)
+library(car)
+library(lmtest)
+library(urbnmapr)
+library(RCurl)
+library(cowplot)
+library(stringr)
+
+```
+
+# Investigating the Relationship between Mask Usage and Covid-19 Cases
+
+## Intoduction
+
+Throughout the past 18 months, all the nations of the world have been grappling with a once in a century pandemic. The spread of the Covid-19 disease has taken a huge toll on global health, adversely affected the entire global economy and drastically transformed the daily lives of virtually every person on earth, making it a noteworthy event in the course of human history. Experts warn that similar pandemics can and will occur in the future, and hence, must be prepared for. Investigating characteristics of the Covid-19 pandemic provides an opportunity to learn insights that have an incredible potential to mitigate harm from future disease epidemics.
+
+A crucial tool to control the spread of the Coronavirus was the use of face masks by the general population, often mandated by their respective governments. However, due to the political situation in the United States, the federal government failed to put forth a clear message on the critical importance of mask wearing to combat the pandemic. As a result, polarized sections of society made decisions on the use of face masks based on their individual political leanings, rather than the directives of public health agencies, leading to a wide variety of mask use behaviors in different locations around the country. In this paper, we aim to investigate the effect of mask use behaviors on Covid-19 cases. Specifically, we address the following research question:
+
+“How does the usage of masks by the general public affect the number of Covid-19 cases in their respective communities?”
+
+The mechanism behind the usage of face masks on controlling the spread of a respiratory disease seems self evident. Numerous studies^[An evidence review of face masks against COVID-19: https://www.pnas.org/content/118/4/e2014564118] have confirmed the efficacy of mask use to reduce transmission of the virus. We present a data driven investigation by counties in the United States into whether or not a more frequent usage of masks by people in a county causes lower Covid-19 case counts in that particular county. In addition, we also explore the effects of various county level attributes on the Covid-19 cases counts, including, education levels, proportion of seniors, percentage of females and classification as urban and rural. We use OLS regression as a strategy to build a series of explanatory models to investigate the effects of our input variables, primarily mask use behavior on our outcome variable, namely Covid-19 cases.
+
+
+## Description of Data
+
+
+The following section describes the process used to operationalize each of the variables that are used in this analysis. The data for mask use behavior, our primary input variable is provided by the New York Times^[Estimates from The New York Times, based on roughly 250,000 interviews conducted by Dynata from July 2 to July 14: https://github.com/nytimes/covid-19-data/tree/master/mask-use ]. The data was collected through a online interviews performed by Dynata, a global data and survey firm, at the request of the New York Times. The survey was conducted between July 2 and July 14, 2020. About 250,000 survey responses were used to estimate frequency of mask use at a county level, through appropriate weighting by age and gender. ZIP codes were used to approximate the locations of the survey respondents. The data for each observation is provided in a categorical fashion representing various levels of frequency of mask use. The mask use frequency levels are specified as NEVER, RARELY, SOMETIMES, FREQUENTLY AND ALWAYS. Numerical values, provided for each of the frequency levels, represent the fraction of survey respondents that answered the question "How often do you wear a mask in public when you expect to be within six feet of another person?" with one of the frequency level. Each observation represents mask use behavior for a county in the United States. In the interest of parsimony, we simplify the variable for use in our regression models. We define a respondent that answer the survey question with FREQUENTLY or ALWAYS as a frequent mask user. We use this definition for frequent mask user as it captures the attitude of the respondent towards mask use. Since the guidance from public health agencies at the time when this data was collected was to always use masks within six feet of another person, we argue that NEVER, RARELY or SOMETIMES wearing a mask does not sufficiently follow this guidance. We use the fraction of frequent mask users in a county to represent that mask use behavior in a particular county, calculated simply by summing the numerical values provided in the FREQUENTLY and ALWAYS categories for each county.
+
+The data source for the outcome variable is the Covid-19 data base maintained by the New York Times^[The New York Times. (2021). Coronavirus (Covid-19) Data in the United States. Retrieved August 1st, 2021, from https://github.com/nytimes/covid-19-data."]. Since the report of the first Coivd-19 cases in Washington state, the Times has tracked cases of Covid-19 in real time as they were identified after testing. Because of the shortage in Covid-19 testing at the time, the data is necessarily limited in the picture it presents of the outbreak. The data is gathered from state and local governments and health departments and is made available for public use for non commercial research purposes. Cumulative Covid-19 case counts are provided for each day and for each county starting from Jan 21, 2020. We use the data from July 14, 2020. We choose this particular date because the mask use data collection was performed from July 2, 2020 to July 14, 2020 and the normal incubation time for Covid-19 is considered to be 2-14 days. July 14 is approximately 7 days after the bisection date of the survey process. Each observation represents the number of Covid-19 cases for each county in the United States. We chose to use the number of cases in a county per 100 thousand residents to normalize for the population differences within different counties. We also choose the total number of Covid-19 cases, rather than a change in the number of cases or multiples of number of cases in some duration. We do this because the spread of a disease is a very complex phenomenon that depends on many factors, such as, movement of the public in and out of the county, lockdown rules, general health of the population and so on. To simplify the analysis, we assume that the mask use behavior data denotes the general attitude of the county towards taking precautions against the disease and the number of cases per capita denotes the outcome of the pandemic in the county. We acknowledge that this treatment of the variable is an oversimplification, but argue that there are still interesting insights to be learnt from this analysis.
+
+Another input variable used is education levels in a county in the United States. Data for this variable is provided by the US Department of Agriculture through it's Economic Research Service(ESR)^[Economic Research Service
+U.S. DEPARTMENT OF AGRICULTURE: https://www.ers.usda.gov/data-products/county-level-data-sets/] .ESR compiles the latest data on measures such as poverty rates, population change, unemployment rates and education levels. The data is compiled from U.S. Census Bureau Censuses of Population, and the 2015-19 American Community Survey. Each observation corresponds to a county in the United States and contains the educational attainment for adults age 25 and older. The education attainment levels are classified as less than a high school diploma, high school diploma, some college and four years of college or higher. The number of individuals and percentage of adults are reported for each of the education levels from 1970-2019, with a time point for every 10 years until 2000 and a final time point of 2015-2019. For the purposes of this analysis, we consider the percentage of adults with a bachelor's degree as the education level indicator for every county from 2015-2019. We are argue that completing a bachelor's degree is a sufficient education level for an individual to understand the mechanisms of how face masks prevents the spread of respiratory diseases and provides a sense of the expertise that is required for infectious disease experts and public health officials to make decisions regarding mask use directives. Consequently, these individuals are likely to trust the pandemic response guidance provided by experts and at the same time, have enough skepticism to detect any inconsistencies in the guidance.
+
+The third input variable used in this analysis is the Urban/Rural classification of a county. The data source for this variable is also the Economic Research Service from the US Department of Agriculture^[Economic Research Service
+U.S. DEPARTMENT OF AGRICULTURE: https://www.ers.usda.gov/data-products/urban-influence-codes/]. The data set provides Urban Influence Codes for every county in the United states.  The 2013 Urban Influence Codes are used as a classification scheme that distinguishes each county in the United States as metropolitan county or nonmetropolitan county, both further divided into 12 subgroups. A county is is designated as metropolitan if it contains atleast one city having a population of more than 2.5 million residents as defined by the office of Management and Budget^[https://obamawhitehouse.archives.gov/sites/default/files/omb/bulletins/2013/b-13-01.pdf]. We use the higher level definition of metropolitan vs nonmetropolitan for every county. We argue that the higher population density in a metropolitan region would be a direct influence on the rate of spread of the Coronavirus as an infected person is likely to come in contact with a larger number of persons in a population dense region. Of the 12 Urban influence codes, a county designated as 1 or 2 is considered metropolitan and counties designated as 3 through 12 are considered nonmetropolitan. The data set specifies 1236 counties and regions as metropolitan and 1984 counties and regions as nonmetropolitan.
+
+The fourth input variable considered is the percentage of people in a county over 60 years of age. This data is provided by Kaiser Health News and is hosted online on kaggle.com^[https://www.kaggle.com/jaimeblasco/icu-beds-by-county-in-the-us]. The primary focus of this data set is to evaluate the capacity of ICU beds around the nation, but also includes the percentage of people above the age of 60 in every county. This percentage is collected from figures provided by Census Bureau’s American Community Survey. We believe that this variable is likely to have a significant effect on the number of Covid-19 cases in a county. Older individuals are likely to be more seriously infected by Covid-19 and hence are likely to show symptoms. Since a Covid-19 case is only registered after a positive Covid test, we argue that a higher percentage of people over 60 in a county would lead to more individuals being symptomatically infected and thus opt for a Covid test. Persons in this age group are less likely to stay as asymptomatic carriers of the disease.
+
+In addition to the above variables, we consider additional variables for inclusion in the analysis that may not have a direct causal link to Covid-19 case loads in a county, but could potential generate interesting insights by inclusion in the analysis. The first variable we consider is the median age of the county. Though this variable has some information overlap with the percentage of people aged more than 60, it also includes information about how young a county is as a whole. Children and younger adults infected with Covid-19 are likelier to be asymptomatic carriers of the disease, and hence, the distribution of the entire population is expected to affect the Covid-19 case count, in addition to the percentage of seniors. The median age is chosen as the statistic to operationalize this variable. This demographic information is provided on the US county level throught the 2014-2018 release of the American Community Survey and is hosted on kaggle.com^[https://www.kaggle.com/headsortails/covid19-us-county-jhu-data-demographics?select=us_county.csv].There is a risk of high correlation between the median age and percentage of seniors variables, hence, we need to be cautious about this fact during our analysis.
+
+The final input variable that we have considered is the percentage of females in a county. This variable also contained in the data set provided by the American Community Survey and hosted on kaggle.com. We are interested in investigating if there are any systematic differences in Covid-19 case rates with the percentage of female population in a county. Any difference might indicate differences in the lifestyle of females and males on average that cause one gender to be more likely to be infect by the virus, such as possibility of remote work or usage of public transit.
+
+### Underlying Causal Model
+
+
+
+``` {r causal-graph, fig.align='center', fig.cap = "Causal Graph", echo=FALSE, warning=TRUE, message=FALSE,out.width= "75%"}
+
+knitr::include_graphics("CausalGraph.png")
+
+```
+
+The causal relationships for the variables are depicted in Figure \@ref(fig:causal-graph). According to our causal theory, mask use behavior affects Covid-19 cases. Most recommended face masks filter out the virus particles and hence reduce the transmission of air borne virus particles from an infected person or to an uninfected person. We also theorize that a county being urban or rural affects both mask use behaviors and Covid-19 cases. Urban counties have a larger population and population density of people and thus would provide an easier pathway for virus transmission, compared to their rural counterparts. Urban/rural counties also may affect mask use because of the political atmosphere in the United States during the period under investigation. Rural counties tend to be Republican leaning, and hence are likely to make decisions about mask use based on the political messaging of the party. Many prominent Republican leaders had expressed skepticism about mask usage, which we believe affected the mask use behavior in theie supporters. A similar effect, but in the opposite direction exists in Urban counties. Education is expected to affect mask use behavior. It is reasonable to assume that a higher level of education would contribute to a person's understanding of the mechanism of transmission of the Covid-19 virus. Hence, they are likely to use face masks as a precaution against the disease. Percentage of seniors affect the Covid-19 cases because seniors are likely to have symptomatic infections and hence, opt for a Covid-19 test, which may return positive and add to the Covid-19 case counts. Percentage of females may affect the Covid-19 cases if there is indeed a systematic difference in the lifestyle of females that lead them to be exposed to the virus with a larger probability. All unconsidered causes are grouped together as the $\epsilon$ term in the model.
+
+## Exploratory Data Analysis
+
+### Modeling variables
+
+Our goal of this research is to find "How does the usage of masks by the general public affect the number of COVID-19 cases in their respective communities?". The response variable is the number of COVID-19 cases, which will be standardized to COVID-19 cases per hundred thousand residents for each county. The main explanatory variable is the percentage of masks used by the general population in each county.
+
+### Primary Explanatory Variables
+
+**Mask use:** We consider 'estimated prevalence of mask-wearing' in counties as our primary explanatory variable. There are five categories of the frequency of wearing masks:  'Never', 'Rarely', 'Sometimes', 'Frequently', and 'Always'. We decided to create a new variable called 'frequent_mask_use' by taking the sum of values of 'Frequently' and 'Always' columns, and to use this new variable 'frequent_mask_use' to represent the percentage of people in this county who wear masks most of the time. 
+$$\text{frequent.mask.use} = \text{Frequently}+\text{Always}$$
+
+
+### Response Variable
+We considered ‘COVID-19 cases per hundred thousand residents’ as our primary response variable. We consider two counties to be equally affected by COVID, only if they have the same rate of occurrence of COVID, i.e. the number of COVID cases as a fraction of the total populations is the same. We standardized the total cases per county into total cases per 100,000 residents of the county using the following formula:
+$$\text{Cases.Per.100K}=\frac{\text{cases}}{\text{population}}*100,000$$
+The number of cases per county is available as the variable ‘cases’ from the US COVID-19 dataframe released by New York Times. Each county's population is available as the variable ‘population’ from the US Demographic dataframe. As the ratio cases/population represents the fraction of population of COVID-19 cases, we multiply it by 100,000 to scale the fraction to one hundred thousand residents. With this transformation Cases.Per.100K now represents the operationalized variable for the primary response variable ‘Covid cases per one hundred thousand residents’. We use the cases data for July 14, 2020 as described in the data description section.
+
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+mask.use <- read.csv("mask-use-by-county.csv")
+cases <- read.csv("us-counties_cases.csv")
+
+```
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+cases %<>% 
+  mutate(date = as.Date(date))%>%
+  filter(date == as.Date("2020-7-14"))
+```
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+covid19 <- mask.use %>%
+  mutate(frequent.mask.use=FREQUENTLY+ALWAYS)%>%
+  select(COUNTYFP,frequent.mask.use)%>%
+  left_join(cases,by = c("COUNTYFP"= "fips"))
+```
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+us_county_population<- read.csv("us_county_population.csv")
+icu_population_60<- read.csv("icu_population_60.csv")
+```
+
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+us_county_population %<>%
+  select(fips,median_age,population,female_percentage)
+
+icu_population_60 %<>%
+  select(State,County,Percent.of.Population.Aged.60.) %>%
+  rename(percent_of_population_over_60 = Percent.of.Population.Aged.60.)
+```
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+covid19 %<>%
+  left_join(us_county_population,by=c("COUNTYFP"= "fips"))%>%
+  left_join(icu_population_60,by=c("state"="State","county"="County"))
+
+```
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+education<- read_xls("Education.xls", sheet = "Education 1970 to 2019", skip = 4)
+```
+
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+education %<>%
+  select(`FIPS Code`,`Percent of adults with a bachelor's degree or higher, 2015-19` )%>%
+  rename(percent_of_bachelor_degree=`Percent of adults with a bachelor's degree or higher, 2015-19`)%>%
+  mutate(FIPS.Code=as.integer(`FIPS Code`))%>%
+  select(FIPS.Code,percent_of_bachelor_degree)
+```
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+covid19 %<>%
+  left_join(education,by=c("COUNTYFP"= "FIPS.Code"))
+```
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+urban_data <- read_xls("UrbanInfluenceCodes2013.xls", sheet = "Urban Influence Codes 2013")
+```
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+urban_data %<>% 
+  select(FIPS,UIC_2013) %>%
+  rename(urban_or_rural = UIC_2013) %>%
+  mutate(FIPS=as.integer(FIPS),urban_or_rural=ifelse(urban_or_rural %in% c(1,2),"Urban","Rural"))
+```
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+covid19 %<>%
+  left_join(urban_data,by=c("COUNTYFP"= "FIPS"))
+```
+
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+covid19 %<>%
+  mutate(cases.per.100k=cases/population * 100000)%>%
+  select(COUNTYFP,county,frequent.mask.use,median_age,female_percentage,percent_of_population_over_60,percent_of_bachelor_degree,urban_or_rural,cases.per.100k)
+```
+
+
+```{r, echo=FALSE, include=FALSE, warning=TRUE, message=FALSE}
+covid19 <- na.omit(covid19)
+```
+
+``` {r cases-per-100k-map,  fig.align='center', fig.cap = "Causal Graph", echo=FALSE, warning=TRUE, message=FALSE,out.width= "75%"}
+
+knitr::include_graphics("Cases_map.png")
+
+```
+```{r population data}
+# from https://www.census.gov/data/datasets/time-series/demo/popest/2010s-counties-total.html#par_textimage_70769902
+
+population <- read_csv("../Data_for_lab_2/co-est2019-alldata.csv")
+population_by_county <- population %>%
+  select(COUNTY, STATE, POPESTIMATE2019)
+
+# Creating county_fips equivalent to other data sets
+population_by_county$county_fips <- gsub(" ", "", paste(population_by_county$STATE, population_by_county$COUNTY))
+
+glimpse(population_by_county)
+
+
+```
+```{r joining cases and population}
+
+cases_population <- left_join(cases_july_14, population_by_county, by = "county_fips")
+cases_population$cases_per_100k <- cases_population$cases/cases_population$POPESTIMATE2019*1e5
+transform(cases_population, county_fips = as.numeric(county_fips))
+cases_population <- left_join(cases_population, mask_use, by ="county_fips")
+cases_population$TOTAL <- cases_population$NEVER + cases_population$RARELY + cases_population$SOMETIMES + cases_population$FREQUENTLY + cases_population$ALWAYS
+glimpse(cases_population)
+
+```
+
+```{r cases_histogram, echo = FALSE,fig.height=6,fig.width=7}
+p1 <- covid19%>%
+  ggplot(aes(cases.per.100k))+
+  geom_histogram(aes(y=..density..),
+                 bins=100,
+                 color="white",
+                 fill="purple")+
+  labs(x="Cases.Per.100K",
+       y="Count",
+       title="Figure 1 (a): Histogram of Cases.Per.100K")+
+
+  geom_density(alpha=.5,fill="#94c4d4")
+
+p2 <- covid19%>%
+  ggplot(aes(log(cases.per.100k)))+
+  geom_histogram(aes(y=..density..),
+                 bins=100,
+                 color="white",
+                 fill="purple")+
+  labs(x="log of Cases.Per.100K",
+       y="Count",
+       title="Figure 1 (b): Histogram of log of Cases.Per.100K")+
+
+  geom_density(alpha=.5,fill="#94c4d4")
+
+grid.arrange(p1,p2)
+```
+
+**A discussion on the response variable**  
+Figure 1 (a) shows the histogram and density of the response variable 'Cases.Per.100K'. We can observe severe right-biased heavy tails in the histogram of Cases.Per.100K. We applied a log transformation to eliminate heavy tails, then it gave us Figure 1 (b). We can see that the curve gets much closer to a normal distribution. We also observe that Case.Per.100K for most of the counties is below 4,000. Using the bar graph on Figure 2, we identify the counties which have more than 4000 cases per hundred thousand residents and we can see that there are 27 counties in total.
+
+```{r Bar_Graph,fig.height=5,fig.width=6, echo = FALSE}
+
+p <-covid19%>%
+  filter(cases.per.100k >= 4000) 
+
+p %>%
+  ggplot(aes(reorder(county,cases.per.100k), cases.per.100k)) +
+  geom_col(width=0.5) +
+  geom_text(label=round(p$cases.per.100k), colour = "black", vjust=0,size = 3)+
+    #position=position_stack(.9),
+  labs(x="county",y="count") +
+  theme_bw() +
+  coord_flip()+
+  labs(title="Figure 2: Bar graph of Cases.Per.100K(>50000) for county")+
+  #theme(plot.title = element_text(hjust = 0.5))+
+  theme(legend.position="bottom")
+```
+
+### Covariate Explanatory Variables
+
+The key categories we had identified and the corresponding variables are listed below.
+
+**COVID-19 US County JHU Data & Demographics**  
+The following variables were extracted from the US COVID-19 Demographics dataframe without any transformation:
+median_age: Overall median age for the county.  
+population: Total population for the county. This variable is used to calculate the number of COVID-19 cases per 100k people, not as a separate dependent variable.
+female_percentage: female / population in percent.
+
+**ICU Beds By County in the US**  
+The following variable was extracted from the ICU Beds US County dataframe without any transformation.    
+Percent.of.Population.Aged.60.(percent_of_population_over_60): The percentage of county population who is 60 or older
+
+**Education**  
+The following variable was extracted from the Education dataframe without any transformation.   
+Percent.of.adults.with.a.bachelor.s.degree.or.higher: The percentage of adults with a bachelor's degree or higher.  
+
+**Urban Influence Codes**  
+The following variable was extracted from Urban Influence Codes dataframe without any transformation. We converted the 'code' and binned them into two buckets that are 'Urban' and 'Rural'.
+
+UIC_2013(urban_or_rural): Code (1 & 2) are urban counties and Code(3-12) are rural counties.
+
+<!-- ## Summary table of all variables -->
+<!-- We use frequent.mask.use as the base dataframe, then gradually join other dataframes to the left and delete the missing values to form the final dataframe covid19.  -->
+
+<!-- # ```{r, echo = FALSE} -->
+<!-- # table <- covid19 %>% -->
+<!-- #   select(-COUNTYFP,-county)%>% -->
+<!-- #   mutate(UIC_2013 = as.factor(UIC_2013)) %>% -->
+<!-- #   summary() -->
+<!-- #  -->
+<!-- # kbl(table,caption = "Response, explanatory and covariate variables summary statistics and categories")%>%  -->
+<!-- #   kable_styling(font_size = 5) -->
+<!-- # ``` -->
+
+### Transform Variables
+
+We generated a scatter plot matrices using the ‘psych’ package in ‘R’ to visualize the relationship between all numerical variables in the dataset. 
+
+```{r Figure 3,fig.height=10, fig.width=12, echo = FALSE}
+covid19 %>%
+  select(-COUNTYFP,-county,-urban_or_rural)%>%
+  pairs.panels(
+             smooth = TRUE,      # If TRUE, draws loess smooths
+             scale = FALSE,      # If TRUE, scales the correlation text font
+             density = TRUE,     # If TRUE, adds density plots and histograms
+             ellipses = TRUE,    # If TRUE, draws ellipses
+             method = "pearson", # Correlation method (also "spearman" or "kendall")
+             pch = 21,           # pch symbol
+             lm = FALSE,         # If TRUE, plots linear fit rather than the LOESS (smoothed) fit
+             cor = TRUE,         # If TRUE, reports correlations
+             jiggle = FALSE,     # If TRUE, data points are jittered
+             factor = 2,         # Jittering factor
+             hist.col = 4,       # Histograms color
+             stars = TRUE,       # If TRUE, adds significance level with stars
+             ci = TRUE,
+             main = "Figure 3: Scatterplot,Histogram and Correlations (All Numeric Varibles)") 
+```
+
+
+From the graph(Fig 3) above, the histograms on the diagonal show the distribution of data and it's easy for us to see whether the data has heavy tails or not. Female_percentage shifts to the left and we have performed an upgrade square conversion. percent_of_bachelor_degree and Case.per.100K are both right-biased, so sqrt and log downgrade conversions have been performed. The scatter matrix chart(Fig 4) below shows these variables after transformation.   
+
+The upper right corner shows correlation coefficient, we can see the correlation coefficient is 0.92 between median_age and Percent.of.Population.Aged.60 which indicates that these two variables have a very strong positive correlation. 
+
+```{r Figure 4,fig.height=5, fig.width=7, warning=FALSE, echo = FALSE}
+covid19 %<>%
+  mutate(log_of_cases.per.100k=log(cases.per.100k), squre_of_female_percentage=female_percentage^2,sqrt_of_percent_of_bachelor_degree=sqrt(percent_of_bachelor_degree))
+
+covid19 %>%
+  select(log_of_cases.per.100k,squre_of_female_percentage,sqrt_of_percent_of_bachelor_degree)%>%
+  pairs.panels(
+             smooth = TRUE,      # If TRUE, draws loess smooths
+             scale = FALSE,      # If TRUE, scales the correlation text font
+             density = TRUE,     # If TRUE, adds density plots and histograms
+             ellipses = TRUE,    # If TRUE, draws ellipses
+             method = "pearson", # Correlation method (also "spearman" or "kendall")
+             pch = 21,           # pch symbol
+             lm = FALSE,         # If TRUE, plots linear fit rather than the LOESS (smoothed) fit
+             cor = TRUE,         # If TRUE, reports correlations
+             jiggle = FALSE,     # If TRUE, data points are jittered
+             factor = 2,         # Jittering factor
+             hist.col = 4,       # Histograms color
+             stars = TRUE,       # If TRUE, adds significance level with stars
+             ci = TRUE,
+             main = "Figure 4: Scatterplot,Histogram and Correlations (Transformed Varibles)") 
+```
+
+
+
+## Model Development
+
+For all of our model hypothesis testing we followed standard practice by utilizing a maximum acceptance level with p-value of 0.05. A regression table is provided following the model section.
+
+### Modeling objectives
+Our model 1 objective is to observe the association between our primary response variable, namely, COVID cases per hundred thousand residents and the primary explanatory variable, namely, percentage of people who wear masks frequently in county population
+
+Our objective for model 2 is to create a parsimonious model that describes the association between COVID cases per hundred thousand residents and percentage of people who wear masks frequently in county population considering the context of other covariates such as the percentage of county population who is 60 or older, percentage of people with bachelor's degree or higher, and if a county is urban or rural. 
+
+Our objective for model 3 is to create a model with the best predictive power for our primary response variable of COVID cases per hundered thousand residents. Covariates include median_age, female_percentage, percent_of_population_aged_60+, percent_of_bachelor_degree, Urban/Rural.
+
+### Model Selection
+
+
+```{r variables_table, echo = FALSE}
+variable_name <- c("Cases.Per.100K","frequent.mask.use","median_age","female_percentage","percent_of_population_over_60","percent_of_bachelor_degree")
+variable_decription <- c("COVID-19 cases per hundred thousand residents","The percentage of people who frequently wear masks","The median age for the county","The female percentage of county population","The percentage of county population who is 60 or older","The percentage of adults with a bachelor's degree or higher")
+min <- c(min(covid19$cases.per.100k),min(covid19$frequent.mask.use),min(covid19$median_age),min(covid19$female_percentage),min(covid19$percent_of_population_over_60),min(covid19$percent_of_bachelor_degree))
+max <- c(max(covid19$cases.per.100k),max(covid19$frequent.mask.use),max(covid19$median_age),max(covid19$female_percentage),max(covid19$percent_of_population_over_60),max(covid19$percent_of_bachelor_degree))
+mean <- c(mean(covid19$cases.per.100k),mean(covid19$frequent.mask.use),mean(covid19$median_age),mean(covid19$female_percentage),mean(covid19$percent_of_population_over_60),mean(covid19$percent_of_bachelor_degree))
+
+```
+
+```{r summary_table1, echo = FALSE}
+num_data <- data.frame(variable_name,variable_decription,min,mean,max)
+
+kbl(num_data,caption = "Summary table of numeric variables")%>% 
+  kable_styling(font_size = 8)
+```
+
+```{r summary_table2, echo = FALSE}
+kbl(table(covid19$urban_or_rural),caption = "Summary table of Categorical variables(Urban/Rural)")%>% 
+  kable_styling(font_size = 12)
+
+```
+
+For the significance level of the hypothesis test, assume $\alpha=0.05$ in advance. In order to evaluate whether the coefficient of each of our models is significant, decide on the null and alternative hypotheses, where i is the index for each coefficient of the regression equation.  
+
+Null hypothesis: $H0: \beta_i = 0$  
+Alternative hypothesis: $HA: βi \neq 0$
+
+### Model 1
+
+Response Variable:  
+* log of cases per 100K Residents, (log_of_Cases.Per.100K)  
+
+Primary Explanatory Variables:  
+* Percentage of mask use in county, (frequent.mask.use)
+
+Model 1 expression:
+
+$$\begin{aligned}\text{log of cases per 100,000 Residents} = \beta_0 + \beta_1*\text{frequent.mask.use} + \epsilon\end{aligned}$$
+
+```{r model1, echo = FALSE}
+fit1 <- lm(log_of_cases.per.100k~frequent.mask.use,data=covid19)
+summary(fit1)
+```
+
+From the result above, we can see that our $\beta_0$ and $\beta_1$ are far less than the significance level $\alpha(0.05)$, so we reject the null hypothesis and accept the alternative hypothesis, the main explanatory variable frequent.mask.use is statistically significant. Therefore, the expression of model one is :
+
+$$\begin{aligned}\text{log of cases per 100,000 Residents} = 4.7185 + 1.8152*\text{frequent.mask.use}\end{aligned} $$
+
+For each additional unit of frequent.mask.use, the average value of cases per 100,000 residents will increase by 1.8152%. The adjusted R-squared of this model is 0.04899, which means that the model's goodness of fit is very low.
+
+### Model 2
+
+Response Variable:  
+* log of cases per 100K Residents, (log_of_Cases.Per.100K)  
+
+Primary Explanatory Variables:  
+* Percentage of mask use in county, (frequent.mask.use)  
+
+Additional Covariate Variables:
+* Percent of Population Aged 60+. (percent_of_population_over_60)  
+* Sqrt of Percent of adults with a bachelor's degree or higher, 2015-19.(sqrt_of_percent_of_bachelor_degree)
+* Whether the county is a urban or a rural area. (urban_or_rural)
+
+Model two expression:
+
+$$\begin{aligned}\text{log of cases per 100,000 Residents} = \beta_0 + \beta_1*\text{frequent.mask.use} + \beta_2*\text{percent.of.population.over.60}\\ + \beta_3* \sqrt{\text{percent.of.bachelor.degree}} + \beta_4*{urban.rural}+  \epsilon\end{aligned}$$
+
+
+```{r model2, echo = FALSE}
+fit2 <- lm(log_of_cases.per.100k~ frequent.mask.use+percent_of_population_over_60+sqrt_of_percent_of_bachelor_degree+urban_or_rural,data=covid19)
+summary(fit2)
+```
+We can see from the result above, all $\beta_i$ are far less than the significance level $\alpha(0.05)$, so we reject the null hypothesis and accept the alternative hypothesis, all independent variables are statistically significant. Therefore, the expression of model 2 is :  
+
+$$\begin{aligned}\text{log of cases per 100,000 Residents} = 7.347965 + 1.428026*\text{frequent.mask.use} -0.073155*\text{percent.of.population.over.60}\\  - 0.136115* \sqrt{\text{percent.of.bachelor.degree}} + 0.220917*{Urban}\end{aligned}$$
+```{r model2 vif}
+vif(fit2)
+```
+We conducted a Value Inflation Factor (VIF) test, which measures how much the variance of a regression coefficient is inflated due to multicollinearity in the model, using the guideline threshold value of 4 indicating strong collinearity between our covariates. The resulting maximum value found was 1.419925 which means that there is no collinearity problem in the variables of our model two.
+Model 2 was a much better fit for the population as our adjusted R-squared value increased from 0.049 to 0.214. 
+
+### Model 3
+
+Response Variable:  
+* log of cases per 100K Residents, (log_of_cases.Per.100k)  
+
+Primary Explanatory Variables:  
+* Percentage of mask use in county, (frequent.mask.use)  
+
+Additional Covariates Variables:
+* Overall median age for the county (median_age)  
+* Square of female / population in percent.(square_of_female_percentage)
+* Percent of Population Aged 60+. (percent_of_population_over_60)  
+* Sqrt of Percent of adults with a bachelor's degree or higher, 2015-19.(sqrt_of_percent_of_bachelor_degree)
+* Whether the county is a urban or a rural area. (urban_or_rural)
+
+$$\begin{aligned}\text{log of cases per 100,000 Residents} = \beta_0 + \beta_1*\text{frequent.mask.use} + \beta_2*\text{median.age} + \beta_3*\text{female.percentage}^2\\ + \beta_4*\text{percent.of.population.over.60} + \beta_3* \sqrt{\text{percent.of.bachelor.degree}} + \beta_4*{urban.rural}+  \epsilon\end{aligned}$$
+
+```{r model3, echo = FALSE}
+fit3 <- lm(log_of_cases.per.100k~frequent.mask.use+median_age+squre_of_female_percentage+percent_of_population_over_60+sqrt_of_percent_of_bachelor_degree+urban_or_rural,data=covid19)
+summary(fit3)
+```
+
+It can be seen that all $\beta_i$ are far less than the significance level $\alpha(0.05)$, so we reject the null hypothesis and accept the alternative hypothesis, all independent variables are significant. This left us with a final model of: :  
+
+$$\begin{aligned}\text{log of cases per 100,000 Residents} = 7.215 + 1.52*\text{frequent.mask.use} -0.043*\text{median.age} + 0.0004*\text{female.percentage}^2\\ - 0.036 *\text{percent.of.population.over.60} - 0.162* \sqrt{\text{percent.of.bachelor.degree}} + 0.231*{Urban}\end{aligned}$$
+
+
+```{r model3 vif}
+vif(fit3)
+```
+We also conducted a value inflation factor test with the guideline that a VIF of 4 or larger represents strong collinearity. From the result above, we can see that the values of median_age and percent_of_population_over_60 are both greater than 4, which means that there is a collinearity and the variables(median_age and percent_of_population_over_60) for model 3 are collinear. 
+
+### Model Regression Table
+
+```{r regression table,warning=FALSE,echo = FALSE, out.width=8}
+stargazer(fit1,fit2,fit3,type="text",
+          title="Model comparison",
+          dep.var.labels=c("Reported COVID-19 Cases per 100K Residents"),
+          # column.labels = c("Model 1", "Model 2", "Model 3"),
+          covariate.labels = c("Percentage of Residents Wear Masks",
+                               "Median Age for County", "Percentage of Female",
+                               "Percentage of Residents 60+", 
+                               "Percentage of Residents High Degree", 
+                               "County (Urban)","Intercept"),
+          no.space = TRUE,
+          column.sep.width = "1pt",
+          font.size = "small",
+          omit.stat = c("f"))
+```
+
+
+Model 2 was a much better fit than model one as the adjusted R-squared value increased from 0.049 to 0.214. Model 3 was the best fit as it has the largest adjusted R-squared value which is 0.228.
+
+
+## Classical Linear Model (CLM) Assumptions and Limitations of the Model
+Below is the discussion of CLM assumptions, along with the analysis of how our models fit in each assumption and several limitations. 
+
+### 1. Identically Distributed Population (IID) 
+
+**Different data draw and report standard and process** - In order to meet IID, ideally the process of COVID data collected from each county should be the same. However, county-level COVID cases data is reported independently by each county, they can be submitted in different county-level processes. For example, for counties that actively comply with pandemic mitigation policies at the beginning of the pandemic, more COVID cases can be captured and reported than those counties responded to COVID slowly. 
+
+Also, to meet with IID, each county should start counting COVID cases at the same time. However, this is not the case in reality. Therefore, there is a different level of accuracy across individual county reported COVID data.This also results in the data deviated from IID assumption. 
+
+### 2. Linear Conditional Expectation
+
+```{r, CLM liner, echo = FALSE}
+covid19 %>% 
+  mutate(
+    model_two_preds = predict(fit2), 
+    model_two_resids = resid(fit2)
+  ) %>% 
+  ggplot(aes(model_two_preds, model_two_resids)) + 
+  geom_point() + 
+  stat_smooth(method = 'gam') +
+  labs(
+  title = "Figure X. Assess the Linear Conditional Expectation of Model 2",
+  subtitle = "This CLM Assumption is generally violated. ") +
+  xlab("Prediction") +
+  ylab("Residuals")
+
+```
+From the figure above, it doesn't produce a flat line, which indicates that there is no a clear linear relationship in this data. This CLM assumption is generally violated. It can be found in the figure that on the left hand side there is an obvious decreasing residuals before it reaches to a relative flat curve range. An non-constant variance is observed. As a result, the estimated standard errors can potentially be incorrect. Therefore, the confidence intervals and hypothesis tests generated may not be completely reliable. However, within a certain range, the blue curve is relatively flat, where we can still reasonably believe that the model could produce relatively meaningful analysis for exploratory purpose.  
+   
+### 3. No Perfect Collinearity
+  
+From running the coeftest, R doesn't drop any variables in our model 2. It confirms that this CLM assumption is met. Additionally, we run the test vif(model_2), it simply examines the variance inflation factor (VIF) for each coefficient. This indicates that the standard errors for each variables are relatively similar, for example, one variable standard error (SE) is not few times higher than the SE of other variables. No obvious variance inflation among those variables, which would prevent our mode to produce a precise measurement wanted from the key variable of interest - mask-use. 
+
+```{r, echo = FALSE}
+coeftest(fit2)
+vif(fit2)
+```
+
+### 4. Homoskedastic Errors
+
+Looking back to the residual and prediction plot above in section "Linear Conditional Expectation", those observations (dots) do not create a constant shape along the line, which indicates that the variance is not constant. This CLP assumption is violated. 
+  
+### 5. Normally Distributed Errors 
+  
+Our team decides to use histogram and Q-Q Plot to assess this CLM assumption. By observing the histogram of model 2 residuals (every observation in the dataset is associated with a true value of the Y and the fitted value of the Y, the residuals are the difference between them), the histogram below clearly shows a bell shaped curve. 
+```{r, Normally Distributed Errors , echo = FALSE}
+hist(fit2$residuals)
+```
+
+Additionally, to double confirm, we run a Q-Q Plot as shown below. It looks at the theoretical quantile in a normal curve. By observing the qqplot result, the data is mostly aligned on the X=Y straight-line, data is slightly deviated from that line on bottom left and top right. Based on those observations we believe this assumption is met. 
+  
+```{r, no perfect collinearity, echo = FALSE}
+qqnorm(resid(fit2))
+qqline(resid(fit2)) 
+```
+
+## Limitations
+In addition to one limitation specified in IID section, below is a further discussion of limitations in our models. 
+
+**Timing of data collection** - Those historical data captured at the beginning of the pandemic, is not captured upon the same standardized processes between counties. By assessing the pandemic roadmap, the CDC Confirmed the First US Coronavirus Case on January 21, however till March 13th Trump Administration Declared COVID-19 a National Emergency. During this gap, there was no a standardized official requirement to each county in terms of how to calculate and submit COVID cases, and when to submit etc. This impacts data accuracy and IID assumption. 
+
+It is reasonable to believe there are missing covid cases from certain counties during this time window. For counties that responded quickly at the beginning of the pandemic, there could be more COVID cases captured. Those records were accumulated as part of the total covid cases count; those counties who actively report covid cases from the early beginning will end up as a high case county. This limitation impacts the population from each county and the standard error result, thus making our models less sensitive to the input variables and introducing potential inaccuracy in our model tests. 
+ 
+**Bias that generated from political view influences** - Even after the national emergency is issued, counties’ responses to pandemic and people’s mask-use behaviors can be greatly impacted by political views. Especially, the data is collected in 2020 - the presidential election year, when different parties frequently expressed their opposit opinions on the pandemic crisis thus creating impact to people's mask-use behaviors. For example, influenced by Trump’s public views which underestimated the pandemic severity, a republican county may not respond to covid related policies actively, the cases captured in the county could be less accurate than a Democrats County. And people’s mask use behavior also is greatly impacted by President Trump’s public speeches and behaviors to Republican counties. 
+
+### Further discussion of limitations
+Even with the limitations above, our team still believe there are sufficient justifications to use the County-Level Covid Cases as our observation variable as follows. 
+
+**County-level observation is relatively the most precise method to assess COVID data**
+County is a political subdivision of a state with governmental authority. How an individual or community response to the pandemic is primarily based on county issued policy. For example, even with nearby counties, per their transmission level differences, the mask-use policy and people’s mask-use behavior can be completely different.  Therefore, county-level data instead of state-level data, can create more precision and effectiveness in our models, especially to hour model 2 – that includes mask-use behavior which is dramatically influenced by county-level policy. 
+County-level observation is the smallest breakdown observation unit team believes can best fit in the IID assumption. County consists of “a geographic region with specific boundaries” 2, therefore the observations in data are exclusive to each other, and at the same time large enough to be regarded as a large random sample, generally fit in the “independent draw” requirement of the IID assumption while providing large enough sample in order to conduct meaningful analysis. 
+
+**County-level observation empowers our models** 
+In our model 2, we added two variables – a county is rural/suburb and county-level college degree rate.  Geographically, whether a location is considered a rural or suburb, can only be precisely defined at county-level instead of other broader scale such as state-level. Same state could have only very few counties that are extremely urbanized while most other counties are rural places. Same as the college degree rate by county, since in one state there could be certain very well-educated counties versus other counties. Therefore, county-level observations successfully justified our model 2 in order to answer the research question. 
+
+Based on the limitations and justifications above, team still decide to choose the models and variables proposed with limitations taken consideration. 
+
+##Omitted Variables Discussion 
+The primary research question of this analysis is to understand the relationship between mask-use with covid cases count at county-level. Naturally people may believe mask-use will reduce COVID cases, however, instead of mask-use being a cause, it could be a result from a county COVID cases count high as more COVID cases may make people want to use masks more. This implies a reverse causality relationship may exist. And there are a variety of variables that have correlations with both the mask-use variable and covid cases count. Our team does not believe those three simple linear models are sophisticated enough to present such complex causal relationships between mask-use and covid cases count. 
+Based on this consideration above, the following variables are the omitted variables we wish to include but did not have in our models.
+
+**2020 annual average COVID transmission rate of each county** – This could be a key variable that blocks out the bi-direction between mask-use and covid cases. If we can add transmission rate as a control, the model result could be more sensitive to the input variable – mask-use. The Beta1 in our models can be more powerful for achieving a meaningful result. 
+ 
+**Monthly average temperature of each county** – This is a variable that the team believes could impact both the input variable mask-use and the outcome variable – covid cases. For example, if a county average temperature in July 2020 (the mask-use data collection time) is greater than 85 F, because of the hot and/or humid feeling, people may choose to not wear masks regardless of other analysis factors. On the contrary, if a county is cold, people may feel more comfortable wearing a mask. And “Influenza virus is more likely to be transmitted during winter on the way to the subway than in a warm room,” said Peter Palese(1), a flu researcher who is professor and chairman of the microbiology department at Mount Sinai School of Medicine in New York and the lead author of the flu study. Therefore, if the temperature is low, it will result in higher transmission rate thus leading to more covid cases.
+
+
+## Conclusion
+
+
+
+## Reference
+(1)_"Study shows why the flu likes winter"_ - The New York Times, https://www.nytimes.com/2007/12/05/health/05iht-05flu.8591550.html
+
+
+
+
+
+
+
+
+
+
+
+
+

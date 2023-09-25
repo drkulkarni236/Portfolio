@@ -1,0 +1,212 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Wind Turbines</title>
+        <!-- <link rel="icon" href="{{ url_for('static', filename='images/Exeltis_Colorvector.svg') }}" type="image/x-icon"> -->
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet">
+        <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">      
+    </head>
+    <body style="background-color: #0065b2ea;">
+        <div class="container" style="padding-top: 20px; padding-bottom: 20px; overflow: hidden; position: relative;">
+            <a href="{{ url_for('static', filename='files/Wind Farm - Signals Variables.pdf') }}" style="position: fixed; top: 10px; right: 10px; font-size: 12px; color: #f0f0f0;">Signals detail</a>
+            <h5>Anomaly score</h5>
+            <div class="card-container" id="cards">
+                <div class="card bg-light mb-3" style="float: left; width: 100%; margin-right: 10px; margin-bottom: 4px !important; text-decoration:none; color: #474747;">
+                    <div class="card-header" style="font-size: 16px; font-weight: 500;">Turbine 01</div>
+                    <div class="card-body" style="padding: 0; margin-bottom: 0px; font-size: 15px;">
+                        <!-- <h5 class="card-title">Light card title</h5> -->
+                        <div style="width: 100%; height: 150px;" id="turbine_plot-t01"></div>
+                        <div style="width: 100%; height: 450px;" id="turbine_plot-t01-contr"></div>
+                    </div>
+                </div>
+                <div class="card bg-light mb-3" style="float: left; width: 100%; margin-right: 10px; margin-bottom: 4px !important; text-decoration:none; color: #474747;">
+                    <div class="card-header" style="font-size: 16px; font-weight: 500;">Turbine 06</div>
+                    <div class="card-body" style="padding: 0; margin-bottom: 0px; font-size: 15px;">
+                        <!-- <h5 class="card-title">Light card title</h5> -->
+                        <div style="width: 100%; height: 150px;" id="turbine_plot-t06"></div>
+                        <div style="width: 100%; height: 450px;" id="turbine_plot-t06-contr"></div>
+                    </div>
+                </div>
+                <div class="card bg-light mb-3" style="float: left; width: 100%; margin-right: 10px; margin-bottom: 4px !important; text-decoration:none; color: #474747;">
+                    <div class="card-header" style="font-size: 16px; font-weight: 500;">Turbine 07</div>
+                    <div class="card-body" style="margin-bottom: 0px; font-size: 15px;">
+                        <!-- <h5 class="card-title">Light card title</h5> -->
+                        <div style="width: 100%; height: 150px;" id="turbine_plot-t07"></div>
+                        <div style="width: 100%; height: 450px;" id="turbine_plot-t07-contr"></div>
+                    </div>
+                </div>
+                <div class="card bg-light mb-3" style="float: left; width: 100%; margin-right: 10px; text-decoration:none; color: #474747;">
+                    <div class="card-header" style="font-size: 16px; font-weight: 500;">Turbine 11</div>
+                    <div class="card-body" style="margin-bottom: 0px; font-size: 15px;">
+                        <!-- <h5 class="card-title">Light card title</h5> -->
+                        <div style="width: 100%; height: 150px;" id="turbine_plot-t11"></div>
+                        <div style="width: 100%; height: 450px;" id="turbine_plot-t11-contr"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </body>
+</html>
+
+<script src="https://code.jquery.com/jquery-3.5.1.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/echarts@5.4.2/dist/echarts.min.js"></script>
+
+<script>
+
+    function create_turbine_plot( turbine_id = '' ) {
+        var dashb_plot = document.getElementById("turbine_plot-" + turbine_id)
+        var echart = echarts.init(dashb_plot)
+        
+        var dashb_plot_contr = document.getElementById("turbine_plot-" + turbine_id + '-contr')
+        var echart_contr = echarts.init(dashb_plot_contr)
+
+        $.ajax({
+            url: 'get_' + turbine_id + '_data', 
+            type: "POST",
+            traditional: true,
+            // data: {
+            //     'select_brand': $('#dd_brand').val(),
+            //     'dd_region': $('#dd_region').val(),
+            //     'group_mode': $('input[name="plot_dashb_conf-cr"]:checked').val(),
+            //     'rolling_mode': $('input[name="plot_dashb_conf-aggr"]:checked').val(),
+            //     // 'check_licenses': $('#check_licenses').prop('checked'),
+            // },
+            success: function(data) {
+                
+                // data received
+                var responseSerieData = data.serieData
+                // var contrSerieData = data.series_contr.Gen_RPM_Avg_contr
+
+                // create series
+                var seriesData = [
+                    { name: 'anomaly', type: 'line', smooth: false, data: responseSerieData, symbol: 'none', sampling: 'lttb'},
+                    // { type: 'line', smooth: false, data: contrSerieData, symbol: 'none', sampling: 'lttb', yAxisIndex: 1 },
+                    { type: 'scatter', data: data.anomDataTrue, itemStyle: {color: '#880808'}, symbolSize: 6 },
+                    { type: 'scatter', data: data.anomDataFalse, itemStyle: {color: '#484848'}, symbolSize: 6 }]
+                
+                // chart options
+                var option = {
+                    grid: {
+                        left: 10, 
+                        right: 10, 
+                        top: 4,
+                        bottom: 30,
+                        containLabel: false // true increases margins
+                    },
+                    // tooltip: { 
+                    //     order: 'valueDesc', 
+                    //     trigger: 'axis',
+                    //     textStyle: {
+                    //         fontSize: 12,
+                    //     }, 
+                    // },
+                    tooltip: { trigger: 'axis',
+                        formatter: function (params) {
+                            let tooltip = ''
+                            params.forEach((param) => {
+                                if (param.seriesName === 'anomaly') {
+                                    tooltip += 'date: ' + param.value[0] + '<br/>'
+                                    tooltip += 'Anomaly: ' + param.value[2] + '<br/>'
+                                    tooltip += 'Future fail: ' + param.value[3] + '<br/>'
+                                    tooltip += 'Features: ' + param.value[4] + ', ' + param.value[5] + ', ' + param.value[6]
+                                } else {
+                                    tooltip += ''
+                                }
+                            })
+                            return tooltip
+                        },
+                    },
+                    xAxis: { data: data.dates,  show: false, type: 'category', axisLine: {lineStyle: {color: '#888'}}, axisTick: {show: true, alignWithLabel: true} },
+                    yAxis: { show: false, min: -150, max:40 },
+                    series: seriesData,
+                    animation: true,
+                    dataZoom: [
+                        { type: 'inside', start: 0, end: 8 },
+                        { start: 0, end: 8 }
+                    ],
+                }
+                echart.setOption(option)
+
+                // create series
+                var seriesData = []
+                var selected = {}
+
+                $.each(data.series_signal, function(signal, value) { 
+                    seriesData.push( { name: signal, type: 'line', lineStyle: { width: 1 }, smooth: false, data: value, symbol: 'none', sampling: 'lttb'} )
+
+                    selected[signal] = false
+                })
+                
+                var option = {
+                    grid: {
+                        left: 10, 
+                        right: 10, 
+                        top: 4,
+                        bottom: 30,
+                        containLabel: false // true increases margins
+                    },
+                    // tooltip: { 
+                    //     order: 'valueDesc', 
+                    //     trigger: 'axis',
+                    //     textStyle: {
+                    //         fontSize: 12,
+                    //     }, 
+                    // },
+                    // tooltip: { trigger: 'axis',
+                    //     formatter: function (params) {
+                    //         let tooltip = ''
+                    //         params.forEach((param) => {
+                    //             if (param.seriesName === 'anomaly') {
+                    //                 tooltip += 'Net Sales: '
+                    //             // } else if (param.seriesName === 'Dev PY') {
+                    //             //     tooltip += 'Net Sales: ' + Intl.NumberFormat('en', { maximumFractionDigits: 1, notation: 'compact' }).format(param.value[2]) + '<br/>'
+                    //             //     tooltip += 'Dev PY: ' + Intl.NumberFormat('en', { maximumFractionDigits: 1, notation: 'compact' }).format(param.value[0] * 100) + '%'
+                    //             } else {
+                    //                 tooltip += ''
+                    //             }
+                    //         })
+                    //         return tooltip
+                    //     },
+                    // },
+                    tooltip: {},
+                    legend: { selected: selected },
+                    xAxis: { data: data.dates,  show: false, type: 'category', axisLine: {lineStyle: {color: '#888'}}, axisTick: {show: true, alignWithLabel: true} },
+                    yAxis: { show: false },
+                    series: seriesData,
+                    animation: true,
+                    dataZoom: [
+                        { type: 'inside', start: 0, end: 8, show: false },
+                        { start: 0, end: 8, show: false }
+                    ],
+                }
+                echart_contr.setOption(option)
+
+
+                // Synchronize the dataZoom components of the two charts
+                echart.on('datazoom', function (evt) {
+                    var zoom = echart.getOption().dataZoom[0];
+                    echart_contr.dispatchAction({
+                        type: 'dataZoom',
+                        dataZoomIndex: 0,
+                        startValue: zoom.startValue,
+                        endValue: zoom.endValue
+                    })
+                })
+
+
+            }, 
+            error: function(xhr, status, error) {
+                console.error(error);
+            }
+        })
+    }
+    create_turbine_plot( turbine_id = 't01' )
+    create_turbine_plot( turbine_id = 't06' )
+    create_turbine_plot( turbine_id = 't07' )
+    create_turbine_plot( turbine_id = 't11' )
+
+
+</script>

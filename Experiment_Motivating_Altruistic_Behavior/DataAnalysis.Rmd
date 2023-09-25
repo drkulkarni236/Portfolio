@@ -1,0 +1,220 @@
+---
+title: "Data Analysis"
+author: "Ryan Wilson, Sumedh Shah, Devashish Kulkarni"
+date: "11/27/2022"
+output: 
+  pdf_document: 
+    number_sections: true
+---
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, tidy.opts = list(width.cutoff = 60), tidy = TRUE )
+
+knitr::knit_engines$set(problem_description = function(options) {
+  code <- paste(options$code, collapse = "\n")
+})
+```
+
+```{r package loads, include = FALSE, warning=FALSE, message=FALSE}
+library(data.table)
+library(sandwich)
+library(lmtest)
+library(stargazer) 
+
+library(ggplot2)
+library(knitr)
+
+set.seed(42)
+```
+
+
+
+```{r read data, include=TRUE}
+d <- fread('w241_project_dataset.csv')
+head(d)
+
+
+```
+
+```{r explore data, include=TRUE}
+
+# Split data table by treatment value
+d_treatment <- d[treatment==1,]
+d_control <- d[treatment==0,]
+head(d_control)
+
+
+
+# Unique values and counts
+
+# Sex
+d[, .(count = .N), by = sex]
+
+# Ethnicity
+d[, .(count = .N), by = ethnicity]
+
+# Age
+d[, .(count = .N), by = age]
+
+# Score
+d[, .(count = .N), by = score]
+
+# Treatment
+d[, .(count = .N), by = treatment]
+
+# Hist of score
+hist(d_control$score)
+hist(d_treatment$score)
+
+# Hist of num questions completed
+hist(d_control$num_completed)
+hist(d_treatment$num_completed)
+```
+
+
+```{r data pre-processing, include=TRUE}
+
+# Remove rows (only 2) with original NA
+d <- na.omit(d)
+nrow(d)
+
+# Replace 'DATA_EXPIRED' and 'CONSENT_REVOKED' values with NA
+d[d == 'DATA_EXPIRED'] <- NaN
+d[d == 'CONSENT_REVOKED'] <- NaN
+
+# Convert age column to numeric type
+d <- d[ , age := as.numeric(age)]
+
+# Create accuracy column which calculates score/num_completed
+d <- d[ , accuracy := ifelse(num_completed==0,0,score/num_completed)]
+
+hist(d$accuracy)
+
+# Convert ethnicity to Asian vs non-Asian binary values
+d <- d[ , ethnicityAsian := ifelse(is.nan(ethnicity) , NaN,
+                                   ifelse(ethnicity=='Asian',1,0))]
+
+# Only select columns used for regressions
+d <- d[ ,.(treatment,age,sex,ethnicityAsian,num_completed,accuracy)]
+
+# Write updated dataset to csv
+# write.csv(d, file = paste0('/home/rstudio/W241FinalProject/', "w241_updated_dataset.csv"))
+# d2 <- fread('w241_updated_dataset.csv')
+# head(d2)
+
+```
+
+
+
+
+# Regressions
+```{r regressions for num completed outcome, include=TRUE}
+
+# Basic regression
+mod2_basic <- lm(num_completed ~ treatment, d)
+#coeftest(mod2_basic, vcov. = vcovHC(mod2_basic),type='HC1')
+
+
+# Second regression
+mod2_second <- lm(num_completed ~ treatment + ethnicityAsian + sex + age, d)
+#coeftest(mod2_second, vcov. = vcovHC(mod2_second),type='HC1')
+
+
+# Third regression (interaction term)
+mod2_int <- lm(num_completed ~ treatment  + ethnicityAsian + sex + age + treatment*ethnicityAsian, d)
+#coeftest(mod2_int, vcov. = vcovHC(mod2_int),type='HC1')
+
+
+#Visualize all regressions
+stargazer(
+          mod2_basic, mod2_second, mod2_int, 
+          type='text', 
+          se = list(sqrt(diag(vcovHC(mod2_basic))),
+                    sqrt(diag(vcovHC(mod2_second))),
+                    sqrt(diag(vcovHC(mod2_int))))
+                    )
+
+
+```
+
+
+```{r regressions for accuracy outcome, include=TRUE}
+
+# Basic regression
+mod_basic <- lm(accuracy ~ treatment , d)
+#coeftest(mod_basic, vcov. = vcovHC(mod_basic), type='HC1')
+
+# Second regression
+mod_second <- lm(accuracy ~ treatment + ethnicityAsian + sex + age, d)
+#coeftest(mod_second, vcov. = vcovHC(mod_second), type='HC1')
+
+# Third regression (interaction term)
+mod_int <- lm(accuracy ~ treatment + ethnicityAsian + sex + age + treatment*ethnicityAsian, d)
+#coeftest(mod_int, vcov. = vcovHC(mod_int), type='HC1')
+
+
+#Visualize regression results
+stargazer(
+          mod_basic, mod_second, mod_int,  
+          type='text', 
+          se = list(sqrt(diag(vcovHC(mod_basic))),
+                    sqrt(diag(vcovHC(mod_second))),
+                    sqrt(diag(vcovHC(mod_int))))
+                    )
+```
+
+
+
+
+
+```{r extra regressions for num completed outcome, include=TRUE}
+
+# Fourth regression (interaction term)
+mod2_int2 <- lm(num_completed ~ treatment  + ethnicityAsian + sex + age + treatment*sex, d)
+#coeftest(mod2_int2, vcov. = vcovHC(mod2_int2),type='HC1')
+
+
+#Fifth regression (interaction term)
+mod2_int3 <- lm(num_completed ~ treatment  + ethnicityAsian + sex + age + treatment*age, d)
+#coeftest(mod2_int3, vcov. = vcovHC(mod2_int3),type='HC1')   
+
+
+#Visualize regressions
+stargazer(
+          mod2_int2, mod2_int3, 
+          type='text', 
+          se = list(
+                    sqrt(diag(vcovHC(mod2_int2))),
+                    sqrt(diag(vcovHC(mod2_int3))))
+                    )
+
+
+```
+
+```{r extra regressions for accuracy outcome, include=TRUE}
+
+# Fourth regression (interaction term)
+mod_int2 <- lm(accuracy ~ treatment + ethnicityAsian + sex + age + treatment*sex, d)
+#coeftest(mod_int2, vcov. = vcovHC(mod_int2), type='HC1')
+    
+# Fifth regression (interaction term)
+mod_int3 <- lm(accuracy ~ treatment + ethnicityAsian + sex + age + treatment*age, d)
+#coeftest(mod_int3, vcov. = vcovHC(mod_int3), type='HC1')
+
+#Visualize regression results
+stargazer(
+          mod_int2, mod_int3, 
+          type='text', 
+          se = list(
+                    sqrt(diag(vcovHC(mod_int2))),
+                    sqrt(diag(vcovHC(mod_int3))))
+                    )
+
+
+```
+
+```{r}
+d[ num_completed == 5, .(count = .N), by = .(treatment)]
+
+chisq_test <- chisq.test(x=c(43,29), p =c(.5,.5))
+chisq_test
+```

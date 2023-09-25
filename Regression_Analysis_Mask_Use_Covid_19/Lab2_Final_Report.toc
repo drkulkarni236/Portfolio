@@ -1,0 +1,26 @@
+\contentsline {section}{\numberline {1}Investigating the Relationship between Mask Usage and Covid-19 Cases}{2}{section.1}%
+\contentsline {subsection}{\numberline {1.1}Intoduction}{2}{subsection.1.1}%
+\contentsline {subsection}{\numberline {1.2}Description of Data}{2}{subsection.1.2}%
+\contentsline {subsubsection}{\numberline {1.2.1}Underlying Causal Model}{4}{subsubsection.1.2.1}%
+\contentsline {subsection}{\numberline {1.3}Exploratory Data Analysis}{5}{subsection.1.3}%
+\contentsline {subsubsection}{\numberline {1.3.1}Modeling variables}{5}{subsubsection.1.3.1}%
+\contentsline {subsubsection}{\numberline {1.3.2}Primary Explanatory Variables}{5}{subsubsection.1.3.2}%
+\contentsline {subsubsection}{\numberline {1.3.3}Response Variable}{5}{subsubsection.1.3.3}%
+\contentsline {subsubsection}{\numberline {1.3.4}Covariate Explanatory Variables}{9}{subsubsection.1.3.4}%
+\contentsline {subsubsection}{\numberline {1.3.5}Transform Variables}{9}{subsubsection.1.3.5}%
+\contentsline {subsection}{\numberline {1.4}Model Development}{9}{subsection.1.4}%
+\contentsline {subsubsection}{\numberline {1.4.1}Modeling objectives}{9}{subsubsection.1.4.1}%
+\contentsline {subsubsection}{\numberline {1.4.2}Model Selection}{12}{subsubsection.1.4.2}%
+\contentsline {subsubsection}{\numberline {1.4.3}Model 1}{12}{subsubsection.1.4.3}%
+\contentsline {subsubsection}{\numberline {1.4.4}Model 2}{13}{subsubsection.1.4.4}%
+\contentsline {subsubsection}{\numberline {1.4.5}Model 3}{14}{subsubsection.1.4.5}%
+\contentsline {subsubsection}{\numberline {1.4.6}Model Regression Table}{16}{subsubsection.1.4.6}%
+\contentsline {subsection}{\numberline {1.5}Classical Linear Model (CLM) Assumptions and Limitations of the Model}{17}{subsection.1.5}%
+\contentsline {subsubsection}{\numberline {1.5.1}1. Identically Distributed Population (IID)}{17}{subsubsection.1.5.1}%
+\contentsline {subsubsection}{\numberline {1.5.2}2. Linear Conditional Expectation}{17}{subsubsection.1.5.2}%
+\contentsline {subsubsection}{\numberline {1.5.3}3. No Perfect Collinearity}{18}{subsubsection.1.5.3}%
+\contentsline {subsubsection}{\numberline {1.5.4}4. Homoskedastic Errors}{19}{subsubsection.1.5.4}%
+\contentsline {subsubsection}{\numberline {1.5.5}5. Normally Distributed Errors}{19}{subsubsection.1.5.5}%
+\contentsline {subsection}{\numberline {1.6}Limitations}{20}{subsection.1.6}%
+\contentsline {subsubsection}{\numberline {1.6.1}Further discussion of limitations}{21}{subsubsection.1.6.1}%
+\contentsline {subsection}{\numberline {1.7}Conclusion}{22}{subsection.1.7}%

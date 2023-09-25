@@ -1,0 +1,43 @@
+---
+title: "Data Analysis"
+author: "Ryan Wilson, Sumedh Shah, Devashish Kulkarni"
+date: "11/27/2022"
+output: 
+  pdf_document: 
+    number_sections: true
+---
+```{r global options, include = FALSE}
+knitr::opts_chunk$set(message = FALSE, warning = FALSE, tidy.opts = list(width.cutoff = 60), tidy = TRUE )
+
+knitr::knit_engines$set(problem_description = function(options) {
+  code <- paste(options$code, collapse = "\n")
+})
+```
+
+```{r package loads, include = FALSE, warning=FALSE, message=FALSE}
+library(data.table)
+library(sandwich)
+library(lmtest)
+library(stargazer) 
+
+library(ggplot2)
+library(knitr)
+
+set.seed(42)
+```
+
+
+
+```{r read data, include=TRUE}
+d <- fread('w241_updated_dataset.csv')
+head(d)
+```
+
+
+
+
+
+
+
+
+

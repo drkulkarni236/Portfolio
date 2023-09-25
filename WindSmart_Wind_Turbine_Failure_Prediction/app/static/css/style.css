@@ -1,0 +1,132 @@
+/**************************** general ****************************/
+body {
+    margin: 0;
+    height: 100%;
+    /* overflow: hidden; */
+    background-color: #f1f1f1;
+    color: #dcdbdbda;
+    caret-color: transparent;
+    /* font-family: 'Roboto', sans-serif !important; */
+}
+.container-fluid {
+    max-width: 95%;
+    overflow: hidden;
+}
+.content {
+    width: 100%;
+    overflow: auto;
+    height: calc(100vh - 47.1px);
+}
+
+
+/**************************** navbar****************************/
+.navbar {
+    height: 47.1px;
+}
+.nav_page_inactive {
+    cursor: pointer; width: 95px; padding-top: 9.8px; padding-left: 0px; padding-right: 0px; text-align:center; font-size: 15px; color: #e7e7e7de !important;
+}
+.nav_page_active {
+    font-size: 18px !important;
+    padding-top: 6.5px !important;
+    padding-bottom: 0px !important;
+    color: #ffffff !important;
+    cursor: pointer;
+    text-align:center;
+}
+.nav-link:hover {
+    color: #ffffff !important;
+}
+
+/**************************** svg background ****************************/
+#svg-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    padding: 4%;
+    padding-right: 6%;
+    z-index: -1;
+    opacity: 0.3; /* Adjust opacity value here */
+}
+#svg-container img {
+    width: 100%;
+    height: 100%;
+}
+
+/**************************** scroll bar****************************/
+::-webkit-scrollbar { /* width*/
+    width: 5px;
+    height: 5px;
+}
+::-webkit-scrollbar-track { /* Track */
+    box-shadow: inset 0 0 5px grey;
+    border-radius: 10px;
+    background: #ecf0f1;
+}
+::-webkit-scrollbar-thumb { /* Handle */
+    background: #2c405470;
+    border-radius: 10px;
+}
+::-webkit-scrollbar-thumb:hover { /* handle on hover */
+    background: #2c405470;
+}
+
+.filter-option {
+    font-size: 1rem !important;
+}
+
+/**************************** hvoerable left panel ****************************/
+.panel {
+    position: fixed;
+    top: 0;
+    left: -280px; /* Adjust the value as needed to position the panel */
+    width: 280px;
+    height: 100vh;
+    padding-left: 15px;
+    padding-right: 15px;
+    padding-top: 110px;
+    background-color: #f0f0f0ef;
+    border-right: 1px solid #cfcfcf;
+    transition: left 0.3s;
+    z-index: 998;
+}
+.hoverable {
+    position: fixed;
+    top: 60px;
+    left: 0px; /* Adjust the value as needed to position the panel */
+    padding-left: 6px;
+    width: fit-content;
+    z-index: 999;
+    cursor:context-menu;
+}
+  
+.hoverable:hover + .panel,
+.panel:hover {
+    left: 0;
+}
+
+/**************************** range ****************************/
+#range::-webkit-slider-runnable-track {
+    height: 5px;
+}
+#range::-moz-range-track {
+    height: 8px;
+}
+#range::-ms-track {
+    height: 8px;
+}
+#range::-webkit-slider-thumb {
+    width: 12px;
+    height: 12px;
+    background-color: #ffffff;
+}
+#range::-moz-range-thumb {
+    width: 12px;
+    height: 12px;
+}
+#range::-ms-thumb {
+    width: 12px;
+    height: 12px;
+}

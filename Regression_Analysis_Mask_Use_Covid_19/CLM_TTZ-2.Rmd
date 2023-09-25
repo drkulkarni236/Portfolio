@@ -1,0 +1,334 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=TRUE, message=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+library(magrittr)
+library(car)
+library(lubridate)
+library(stargazer)
+#library(xlsx)
+install.packages("lmtest")
+library(lmtest)
+library(readxl)
+library(kableExtra)
+library(psych)
+library(gridExtra)
+
+```
+
+```{r, echo = FALSE}
+mask.use <- read.csv("mask-use-by-county.csv")
+cases <- read.csv("us-counties_cases.csv")
+
+```
+
+
+```{r, echo = FALSE}
+cases %<>% 
+  mutate(date = as.Date(date))%>%
+  filter(date == as.Date("2020-7-14") ) #%>%
+ # filter(date %within% interval(as.Date("2020-7-2"),as.Date("2020-7-14") ))%>%
+  #select(-date) %>%
+  #group_by(county,state,fips) %>%
+  #summarise_all(sum)
+```
+
+```{r, echo = FALSE}
+covid19 <- mask.use %>%
+  mutate(mask.use=FREQUENTLY+ALWAYS)%>%
+  select(COUNTYFP,mask.use)%>%
+  left_join(cases,by = c("COUNTYFP"= "fips"))
+
+
+```
+
+```{r, echo = FALSE}
+us_county<- read.csv("us_county_population.csv")
+data.FPBfZ<- read.csv("icu_population_60.csv")
+```
+
+
+```{r, echo = FALSE}
+us_county %<>%
+  select(fips,median_age,population,female_percentage)
+
+data.FPBfZ %<>%
+  select(State,County,ICU.Beds,Percent.of.Population.Aged.60.)
+```
+
+
+```{r, echo = FALSE}
+covid19 %<>%
+  left_join(us_county,by=c("COUNTYFP"= "fips"))%>%
+  left_join(data.FPBfZ,by=c("state"="State","county"="County"))
+  
+
+```
+
+```{r, echo = FALSE}
+#Education<- read.xlsx("Education.xls", sheetName = "Education 1970 to 2019", encoding = 'UTF-8',startRow = 5)
+Education<- read_xls("Education.xls", sheet = "Education 1970 to 2019", skip = 4)
+```
+
+```{r}
+str(Education)
+```
+
+
+```{r, echo = FALSE}
+#names(Education[47,])
+Education %<>%
+  select(`FIPS Code`,`Percent of adults with a bachelor's degree or higher, 2015-19` )%>%
+  rename(HighDegreePercent=`Percent of adults with a bachelor's degree or higher, 2015-19`)%>%
+  mutate(FIPS.Code=as.integer(`FIPS Code`))%>%
+  select(FIPS.Code,HighDegreePercent)
+```
+
+```{r, echo = FALSE}
+covid19 %<>%
+  left_join(Education,by=c("COUNTYFP"= "FIPS.Code"))
+```
+
+```{r, echo = FALSE}
+#Urban<- read.xlsx("UrbanInfluenceCodes2013.xls", sheetName = "Urban Influence Codes 2013", encoding = 'UTF-8')
+Urban<- read_xls("UrbanInfluenceCodes2013.xls", sheet = "Urban Influence Codes 2013")
+```
+
+```{r, echo = FALSE}
+Urban %<>% 
+  select(FIPS,UIC_2013) %>%
+  mutate(FIPS=as.integer(FIPS),UIC_2013=ifelse(UIC_2013 %in% c(1,2),"Urban","Rural"))
+```
+
+```{r, echo = FALSE}
+covid19 %<>%
+  left_join(Urban,by=c("COUNTYFP"= "FIPS"))
+```
+
+
+```{r, echo = FALSE}
+covid19 %<>%
+  mutate(cases.per.100k=cases/population * 100000)%>%
+  select(COUNTYFP,county,mask.use,median_age,female_percentage,ICU.Beds,Percent.of.Population.Aged.60.,HighDegreePercent,UIC_2013,cases.per.100k)
+```
+
+
+```{r, echo = FALSE}
+covid19 <- na.omit(covid19)
+```
+
+
+
+```{r, echo = FALSE,fig.height=6,fig.width=7}
+p1 <- covid19%>%
+  ggplot(aes(cases.per.100k))+
+  geom_histogram(aes(y=..density..),
+                 bins=100,
+                 color="white",
+                 fill="purple")+
+  labs(x="cases.per.100k",
+       y="Count",
+       title="Figure 1: Histogram of cases.per.100k")+
+
+  geom_density(alpha=.5,fill="#94c4d4")
+
+p2 <- covid19%>%
+  ggplot(aes(log(cases.per.100k)))+
+  geom_histogram(aes(y=..density..),
+                 bins=100,
+                 color="white",
+                 fill="purple")+
+  labs(x="log of cases.per.100k",
+       y="Count",
+       title="Figure 1: Histogram of log of cases.per.100k")+
+
+  geom_density(alpha=.5,fill="#94c4d4")
+
+grid.arrange(p1,p2)
+```
+
+```{r,fig.height=5,fig.width=6, echo = FALSE}
+
+p <-covid19%>%
+  filter(cases.per.100k >= 4000) 
+
+p %>%
+  ggplot(aes(reorder(county,cases.per.100k), cases.per.100k)) +
+  geom_col(width=0.5) +
+  geom_text(label=round(p$cases.per.100k), colour = "black", vjust=0,size = 3)+
+    #position=position_stack(.9),
+  labs(x="county",y="count") +
+  theme_bw() +
+  coord_flip()+
+  labs(title="Figure 2: Bar graph of Cases.Per.100K(>50000) for county")+
+  #theme(plot.title = element_text(hjust = 0.5))+
+  theme(legend.position="bottom")
+```
+
+```{r, echo = FALSE}
+table <- covid19 %>%
+  select(-COUNTYFP,-county)%>%
+  mutate(UIC_2013 = as.factor(UIC_2013)) %>%
+  summary()
+
+kbl(table,caption = "Summary table of variables")%>% 
+  kable_styling(font_size = 5)
+```
+
+
+
+```{r,fig.height=10, fig.width=12, echo = FALSE}
+covid19 %>%
+  select(-COUNTYFP,-county,-UIC_2013)%>%
+  pairs.panels(
+             smooth = TRUE,      # If TRUE, draws loess smooths
+             scale = FALSE,      # If TRUE, scales the correlation text font
+             density = TRUE,     # If TRUE, adds density plots and histograms
+             ellipses = TRUE,    # If TRUE, draws ellipses
+             method = "pearson", # Correlation method (also "spearman" or "kendall")
+             pch = 21,           # pch symbol
+             lm = FALSE,         # If TRUE, plots linear fit rather than the LOESS (smoothed) fit
+             cor = TRUE,         # If TRUE, reports correlations
+             jiggle = FALSE,     # If TRUE, data points are jittered
+             factor = 2,         # Jittering factor
+             hist.col = 4,       # Histograms color
+             stars = TRUE,       # If TRUE, adds significance level with stars
+             ci = TRUE) 
+```
+
+
+```{r,warning=FALSE, echo = FALSE}
+covid19 %<>%
+  mutate(log_of_cases.per.100k=log(cases.per.100k), squre_of_female_percentage=female_percentage^2,sqrt_of_HighDegreePercent=sqrt(HighDegreePercent))
+
+covid19 %>%
+  select(log_of_cases.per.100k,squre_of_female_percentage,sqrt_of_HighDegreePercent)%>%
+  pairs.panels(
+             smooth = TRUE,      # If TRUE, draws loess smooths
+             scale = FALSE,      # If TRUE, scales the correlation text font
+             density = TRUE,     # If TRUE, adds density plots and histograms
+             ellipses = TRUE,    # If TRUE, draws ellipses
+             method = "pearson", # Correlation method (also "spearman" or "kendall")
+             pch = 21,           # pch symbol
+             lm = FALSE,         # If TRUE, plots linear fit rather than the LOESS (smoothed) fit
+             cor = TRUE,         # If TRUE, reports correlations
+             jiggle = FALSE,     # If TRUE, data points are jittered
+             factor = 2,         # Jittering factor
+             hist.col = 4,       # Histograms color
+             stars = TRUE,       # If TRUE, adds significance level with stars
+             ci = TRUE) 
+```
+
+
+
+```{r, echo = FALSE}
+fit1 <- lm(log_of_cases.per.100k~mask.use,data=covid19)
+summary(fit1)
+```
+
+
+
+
+### Model two
+
+```{r, echo = FALSE}
+fit2 <- lm(log_of_cases.per.100k~ mask.use+Percent.of.Population.Aged.60.+sqrt_of_HighDegreePercent+UIC_2013,data=covid19)
+summary(fit2)
+
+```
+
+### Model three
+
+```{r, echo = FALSE}
+fit3 <- lm(log_of_cases.per.100k~mask.use+median_age+squre_of_female_percentage+ICU.Beds+Percent.of.Population.Aged.60.+sqrt_of_HighDegreePercent+UIC_2013,data=covid19)
+summary(fit3)
+```
+
+
+### Model Regression Table
+
+```{r,warning=FALSE,out.width=8}
+stargazer(fit1,fit2,fit3,type="text",
+          title="Model comparison")
+```
+
+
+### Classical Linear Model (CLM) Assumptions and Limitations of the Model (TTZ)
+Below is the discussion of assumptions of CLM, along with the analysis of how our models fit in each assumption and the limitations. 
+
+1. Identically Distributed Population (IID) and limitations
+Different data draw and report standard and process. The observation variable – County-level Covid Cases Count, is reported independently by each county, thus can potentially be submitted in different county-level standards and processes. For example, for counties that actively comply with pandemic mitigation policies at the beginning of the pandemic, more COVID cases can be accurately captured and reported. Therefore, there is a different level of accuracy across individual county reported covid data. 
+ 
+Timing of data collection. Those historical data captured at the beginning of the -pandemic can be varied in each county. By assessing the pandemic roadmap, the CDC Confirmed the First US Coronavirus Case on January 21, however till March 13th Trump Administration Declared COVID-19 a National Emergency. Without a standardized official requirement to each county, it is reasonable to believe there are missing covid cases from counties reported data during this time window. For counties that responded quickly at the beginning of the pandemic, there could be more covid cases captured. Those records were accumulated as part of the total covid cases count; those counties who actively report covid cases from the early beginning will end up as a high case county. This limitation impacts the population from each county and the standard error result, thus making our models less sensitive to the input variables. 
+ 
+Bias from political view influences. Even after the national emergency is issued, counties’ responses to pandemic and people’s mask-use behaviors can be greatly impacted by political views. Especially, the data is collected in 2020 - the presidential election year, when different parties frequently expressed their different opinion on the pandemic crisis thus creating impact to the public. For example, influenced by Trump’s public views which underestimated the pandemic severity, a republican county may not respond to covid related policies actively, the cases captured in the county could be less accurate than a Democrats County. And people’s mask use behavior also is greatly impacted by President Trump’s public speeches and behaviors to Republican counties. 
+
+  2. Linear Conditional Expectation
+
+```{r, CLM liner, echo = FALSE}
+covid19 %>% 
+  mutate(
+    model_two_preds = predict(fit2), 
+    model_two_resids = resid(fit2)
+  ) %>% 
+  ggplot(aes(model_two_preds, model_two_resids)) + 
+  geom_point() + 
+  stat_smooth(method = 'gam') +
+  labs(
+  title = "Figure X. Assess the Linear Conditional Expectation of Model 2",
+  subtitle = "This CLM Assumption is generally violated. ") +
+  xlab("Prediction") +
+  ylab("Residuals")
+
+```
+From the figure above, it doesn't produce a flat line, which indicates that there is no a clear linear relationship in this data. This CLM assumption is generally violated. It can be found in the figure that on the left hand side there is an obvious decreasing residuals before it reaches to a relative flat curve range. An non-constant variance is observed. As a result, the estimated standard errors can potentially be incorrect. Therefore, the confidence intervals and hypothesis tests generated may not be completely reliable. However, within a certain range, the blue curve is relatively flat, where we can still reasonably believe that the model could produce relatively meaningful analysis for exploratory purpose.  
+   
+  3. No Perfect Collinearity
+  
+From running the coeftest, R doesn't drop any variables in our model 2. It confirms that this CLM assumption is met. Additionally, we run the test vif(model_2), it simply examines the variance inflation factor (VIF) for each coefficient. This is telling us that the standard errors for each variables are relatively similar, for example, one variable standard error (SE) is not few times higher than the SE of other variables. None huge variance inflation among those variables would prevent our mode to produce a precise measurement you want from the key variable of interest - mask-use. 
+
+```{r, echo = FALSE}
+coeftest(fit2)
+vif(fit2)
+```
+
+
+  4. Homoskedastic Errors
+  Looking back to the residual and prediction plot above in section Linear Conditional Expectation, those observations (dots) does not create a constant shape along the line, which indicates that the variance is not constant. This CLP assumption is violated. 
+  
+  5. Normally Distributed Errors 
+  
+  Our team decides to use histogram and Q-Q Plot to assess this CLM assumption. By observing the histogram of model 2 residuals (every observation in the dataset is associated with a true value of the Y and the fitted value of the Y, the residuals are the difference between them.), 
+  the histogram clearly shows a bell shaped curve. Additionally, to double confirm, we run a Q-Q Plot, which looks at the theoretical quintiles in a normal curve. By observing the qqplot result, the data is mostly aligned on the X=Y straight-line, data is slightly deviated from that line on bottom left 
+  and top right. Based on those observations we believe this assumption is met. 
+  
+```{r, no perfect collinearity, echo = FALSE}
+hist(fit2$residuals)
+qqnorm(resid(fit2))
+qqline(resid(fit2)) 
+
+```
+ 
+  
+Even with the limitations above, our team still believe there are sufficient justifications to use the County-Level Covid Cases as our observation variable as follows. 
+County-level observation is relatively the most precise way to assess COVID data. County is “a political subdivision of a state with some level of governmental authority.” 1 How an individual or community response to the pandemic is primarily based on county issued policy. For example, even with nearby counties, per their transmission level differences, the mask-use policy and people’s mask-use behavior can be completely different.  Therefore, county-level data instead of state-level data, can create precision and effectiveness in our models, especially to hour model 2 – that includes mask-use behavior which is dramatically influenced by county-level policy. 
+County-level observation is the smallest breakdown observation unit team believes can best fit in the IID assumption. County consists of “a geographic region with specific boundaries” 2, therefore the observations in data are exclusive to each other, and at the same time large enough to be regarded as a large random sample, generally fit in the “independent draw” requirement of the IID assumption while providing large enough sample in order to conduct meaningful analysis. 
+
+County-level observation empowers our models. In our model 2, we added two variables – a county is rural/suburb and county-level college degree rate.  Geographically, whether a location is considered a rural or suburb, can only be precisely defined at county-level instead of other broader scale such as state-level. Same state could have only very few counties that are extremely urbanized while most other counties are rural places. Same as the college degree rate by county, since in one state there could be certain very well-educated counties versus other counties. Therefore, county-level observations successfully justified our model 2 in order to answer the research question. 
+
+Omitted Variables Discussion 
+The primary research question of this analysis is to understand the relationship between mask-use with covid cases count at county-level. Naturally people may believe mask-use will reduce covid cases, however, instead of mask-use being a cause, it could be a result from a county covid cases count high, thus making people want to use masks more. This implies a reverse causality relationship may exist. And there are a variety of variables that have correlations with both the mask-use variable and covid cases count. Our team does not believe those three linear models were sophisticated enough to present such complex causal relationships between mask-use and covid cases count. 
+
+Based on this consideration above, the following variables are the omitted variables we wish to include but did not have in our models.
+
+2020 annual average COVID transmission rate of each county – This could be a key variable that blocks out the bi-direction between mask-use and covid cases. If we can add transmission rate as a control, the model result could be more sensitive to the input variable – mask-use. The Beta1 in our models can be more powerful for achieving a meaningful result. 
+ 
+Monthly average temperature of each county – This is a variable that the
+team believes could impact both the input variable mask-use and the outcome variable – covid cases. For example, if a county average temperature in July 2020 (the mask-use data collection time) is greater than 85 F, because of the hot and/or humid feeling, people may choose to not wear masks regardless of other analysis factors. On the contrary, if a county is cold, people may feel more comfortable wearing a mask. And “Influenza virus is more likely to be transmitted during winter on the way to the subway than in a warm room,”said Peter Palese, a flu researcher who is professor and chairman of the microbiology department at Mount Sinai School of Medicine in New York and the lead author of the flu study. Therefore, if the temperature is low, it will result in higher transmission rate thus leading to more covid cases.
+
+
