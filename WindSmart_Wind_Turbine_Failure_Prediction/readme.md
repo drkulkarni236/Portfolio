@@ -2,7 +2,7 @@
 
 Repo for capstone project completed as part of Master of Information and Data Science (MIDS) - Capstone course at UC Berkeley.
 
-[More info here](https://drkulkarni236.github.io/project-windsmart.html){:target="_blank"}.
+[Project details here](https://drkulkarni236.github.io/project-windsmart.html).
 
 Python notebooks contain EDA and modeling.
 
