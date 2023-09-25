@@ -3,7 +3,7 @@ Repo for the final project of W203: Statistics for Data Science course completed
 
 [Project details here](https://drkulkarni236.github.io/project-Stats.html).
 
-[Report - R Markdown](https://github.com/drkulkarni236/Portfolio/blob/master/Regression_Analysis_Mask_Use_Covid_19/Lab2_Final_Report.Rmd)
+[Report - R Markdown](https://github.com/drkulkarni236/Portfolio/blob/master/Regression_Analysis_Mask_Use_Covid_19/Lab2_Final_Report.Rmd).
 
-[Report - pdf](https://github.com/drkulkarni236/Portfolio/blob/master/Regression_Analysis_Mask_Use_Covid_19/Lab2_Final_Report.pdf)
+[Report - pdf](https://github.com/drkulkarni236/Portfolio/blob/master/Regression_Analysis_Mask_Use_Covid_19/Lab2_Final_Report.pdf).
 
